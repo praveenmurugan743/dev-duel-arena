@@ -34,15 +34,15 @@ function generateCode() {
 
 function Home() {
   const navigate = useNavigate();
+  const { user, isGoogleUser, loading } = useAuth();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function handleCreate() {
-    if (!name.trim()) return toast.error("Enter a display name");
+  async function doCreate(displayName: string) {
     setBusy(true);
     try {
-      const userId = await ensureAnonSession();
+      const userId = user?.id ?? (await ensureAnonSession());
       const questionIds = await pickRandomQuestionIds(10);
 
       // Try a few times in case of code collision

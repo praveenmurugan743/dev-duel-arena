@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "question": "What does this output? <pre><code class=\"language-javascript\">console.log(typeof null)</code></pre>",
+    "options": ["null", "object", "undefined", "string"],
+    "correct_option": "object",
+    "category": "javascript",
+    "difficulty": "easy"
+  },
+  {
+    "id": 2,
+    "question": "Which HTTP status code means 'I'm a teapot'?",
+    "options": ["404", "418", "451", "503"],
+    "correct_option": "418",
+    "category": "web",
+    "difficulty": "easy"
+  },
+  {
+    "id": 3,
+    "question": "What is the output of this Python snippet? <pre><code class=\"language-python\">print(bool([]))\nprint(bool([0]))</code></pre>",
+    "options": ["True\\nTrue", "False\\nFalse", "False\\nTrue", "True\\nFalse"],
+    "correct_option": "False\\nTrue",
+    "category": "python",
+    "difficulty": "medium"
+  },
+  {
+    "id": 4,
+    "question": "In Git, which command rewrites commit history by replaying commits on top of another base?",
+    "options": ["git merge", "git rebase", "git cherry-pick", "git reset"],
+    "correct_option": "git rebase",
+    "category": "git",
+    "difficulty": "medium"
+  },
+  {
+    "id": 5,
+    "question": "What will this print? <pre><code class=\"language-javascript\">const a = [1, 2, 3];\nconst b = a;\nb.push(4);\nconsole.log(a.length);</code></pre>",
+    "options": ["3", "4", "undefined", "Error"],
+    "correct_option": "4",
+    "category": "javascript",
+    "difficulty": "easy"
+  }
+]

@@ -1,9 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "@/lib/auth";
 import { pickRandomQuestionIds } from "@/lib/questions";
+import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+
+const PENDING_KEY = "dd:pendingCreate";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,15 +34,15 @@ function generateCode() {
 
 function Home() {
   const navigate = useNavigate();
+  const { user, isGoogleUser, loading } = useAuth();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function handleCreate() {
-    if (!name.trim()) return toast.error("Enter a display name");
+  async function doCreate(displayName: string) {
     setBusy(true);
     try {
-      const userId = await ensureAnonSession();
+      const userId = user?.id ?? (await ensureAnonSession());
       const questionIds = await pickRandomQuestionIds(10);
 
       // Try a few times in case of code collision
@@ -66,7 +70,7 @@ function Home() {
 
       const { data: player, error: pErr } = await supabase
         .from("players")
-        .insert({ room_id: roomId, user_id: userId, name: name.trim() })
+        .insert({ room_id: roomId, user_id: userId, name: displayName })
         .select("id")
         .single();
       if (pErr || !player) throw pErr;
@@ -80,6 +84,32 @@ function Home() {
       setBusy(false);
     }
   }
+
+  async function handleCreate() {
+    if (!name.trim()) return toast.error("Enter a display name");
+    if (!isGoogleUser) {
+      sessionStorage.setItem(PENDING_KEY, name.trim());
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.href,
+      });
+      if (result.error) {
+        sessionStorage.removeItem(PENDING_KEY);
+        toast.error("Sign in failed");
+      }
+      return;
+    }
+    await doCreate(name.trim());
+  }
+
+  useEffect(() => {
+    if (loading || !isGoogleUser) return;
+    const pending = sessionStorage.getItem(PENDING_KEY);
+    if (!pending) return;
+    sessionStorage.removeItem(PENDING_KEY);
+    setName(pending);
+    void doCreate(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, isGoogleUser]);
 
   async function handleJoin() {
     if (!name.trim()) return toast.error("Enter a display name");

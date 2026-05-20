@@ -109,12 +109,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 import { Toaster } from "@/components/ui/sonner";
+import { UserMenu } from "@/components/UserMenu";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <div className="fixed top-3 right-3 z-50">
+        <UserMenu />
+      </div>
       <Outlet />
       <Toaster theme="dark" position="top-center" />
     </QueryClientProvider>

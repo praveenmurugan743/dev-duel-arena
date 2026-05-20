@@ -1,9 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "@/lib/auth";
 import { pickRandomQuestionIds } from "@/lib/questions";
+import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+
+const PENDING_KEY = "dd:pendingCreate";
 
 export const Route = createFileRoute("/")({
   head: () => ({

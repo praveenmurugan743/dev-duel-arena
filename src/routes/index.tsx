@@ -70,7 +70,7 @@ function Home() {
 
       const { data: player, error: pErr } = await supabase
         .from("players")
-        .insert({ room_id: roomId, user_id: userId, name: name.trim() })
+        .insert({ room_id: roomId, user_id: userId, name: displayName })
         .select("id")
         .single();
       if (pErr || !player) throw pErr;
@@ -84,6 +84,32 @@ function Home() {
       setBusy(false);
     }
   }
+
+  async function handleCreate() {
+    if (!name.trim()) return toast.error("Enter a display name");
+    if (!isGoogleUser) {
+      sessionStorage.setItem(PENDING_KEY, name.trim());
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.href,
+      });
+      if (result.error) {
+        sessionStorage.removeItem(PENDING_KEY);
+        toast.error("Sign in failed");
+      }
+      return;
+    }
+    await doCreate(name.trim());
+  }
+
+  useEffect(() => {
+    if (loading || !isGoogleUser) return;
+    const pending = sessionStorage.getItem(PENDING_KEY);
+    if (!pending) return;
+    sessionStorage.removeItem(PENDING_KEY);
+    setName(pending);
+    void doCreate(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, isGoogleUser]);
 
   async function handleJoin() {
     if (!name.trim()) return toast.error("Enter a display name");

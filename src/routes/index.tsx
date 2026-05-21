@@ -86,9 +86,8 @@ function Home() {
   }
 
   async function handleCreate() {
-    if (!name.trim()) return toast.error("Enter a display name");
     if (!isGoogleUser) {
-      sessionStorage.setItem(PENDING_KEY, name.trim());
+      if (name.trim()) sessionStorage.setItem(PENDING_KEY, name.trim());
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.href,
       });
@@ -98,6 +97,7 @@ function Home() {
       }
       return;
     }
+    if (!name.trim()) return toast.error("Enter a display name");
     await doCreate(name.trim());
   }
 

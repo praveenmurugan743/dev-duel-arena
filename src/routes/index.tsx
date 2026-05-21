@@ -86,9 +86,8 @@ function Home() {
   }
 
   async function handleCreate() {
-    if (!name.trim()) return toast.error("Enter a display name");
     if (!isGoogleUser) {
-      sessionStorage.setItem(PENDING_KEY, name.trim());
+      if (name.trim()) sessionStorage.setItem(PENDING_KEY, name.trim());
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.href,
       });
@@ -98,6 +97,7 @@ function Home() {
       }
       return;
     }
+    if (!name.trim()) return toast.error("Enter a display name");
     await doCreate(name.trim());
   }
 
@@ -177,11 +177,23 @@ function Home() {
 
           <button
             onClick={handleCreate}
-            disabled={busy}
-            className="w-full bg-neon text-primary-foreground font-bold text-lg py-4 rounded-md hover:opacity-90 transition disabled:opacity-50 font-mono uppercase tracking-wider"
+            disabled={busy || loading}
+            className="w-full bg-neon text-primary-foreground font-bold text-lg py-4 rounded-md hover:opacity-90 transition disabled:opacity-50 font-mono uppercase tracking-wider flex items-center justify-center gap-2"
           >
-            Create Room
+            {isGoogleUser ? (
+              "Create Room"
+            ) : (
+              <>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+                Sign in with Google to Create
+              </>
+            )}
           </button>
+          {!isGoogleUser && !loading && (
+            <p className="text-center text-xs font-mono text-muted-foreground -mt-2">
+              Hosting a room requires a Google account
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />

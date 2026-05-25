@@ -137,6 +137,7 @@ function RoomPage() {
   // Reset selection when question changes
   useEffect(() => {
     setSelected(null);
+    setAnswerResult(null);
   }, [room?.current_question_index]);
 
   // Countdown timer driven by question_started_at

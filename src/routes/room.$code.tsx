@@ -285,6 +285,11 @@ function RoomPage() {
                 question={currentQuestion}
                 timeLeft={timeLeft}
                 selected={selected}
+                answerResult={
+                  answerResult && answerResult.index === room.current_question_index
+                    ? answerResult
+                    : null
+                }
                 onAnswer={submitAnswer}
               />
             )}

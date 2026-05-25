@@ -88,7 +88,7 @@ function RoomPage() {
         const r = roomData as unknown as Room;
         setRoom(r);
 
-        const qs = await getQuestionsByIds(r.question_ids as number[]);
+        const qs = await fetchQuestions({ data: { roomId: r.id } });
         setQuestions(qs);
 
         const { data: ps } = await supabase

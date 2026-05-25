@@ -49,7 +49,12 @@ function RoomPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<PublicQuestion[]>([]);
+  const [answerResult, setAnswerResult] = useState<{ index: number; isCorrect: boolean } | null>(null);
+  const fetchQuestions = useServerFn(getRoomQuestions);
+  const startGameRpc = useServerFn(startGameFn);
+  const advanceRpc = useServerFn(advanceQuestionFn);
+  const submitAnswerRpc = useServerFn(submitAnswerFn);
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
   const [advancing, setAdvancing] = useState(false);

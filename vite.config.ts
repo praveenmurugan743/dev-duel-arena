@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 // @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
 // or the app will break with duplicate plugins:
 //   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, cloudflare (build-only),
@@ -11,5 +12,14 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
+  },
+  vite: {
+    test: {
+      environment: "jsdom",
+      setupFiles: ["./src/test/setup.ts"],
+      globals: true,
+      include: ["src/**/*.{test,spec}.{ts,tsx}"],
+      exclude: ["tests/e2e/**", "node_modules/**"],
+    },
   },
 });

@@ -1,8 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "@/lib/auth";
-import { getQuestionsByIds, type Question } from "@/lib/questions";
+import type { PublicQuestion } from "@/lib/questions";
+import {
+  getRoomQuestions,
+  startGame as startGameFn,
+  advanceQuestion as advanceQuestionFn,
+  submitAnswer as submitAnswerFn,
+} from "@/lib/game.functions";
 import { CodeQuestion } from "@/components/CodeQuestion";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";

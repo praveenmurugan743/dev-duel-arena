@@ -14,6 +14,8 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    // Vitest config is read from the Vite config; the lovable wrapper's
+    // type doesn't expose `test`, so cast through unknown.
     test: {
       environment: "jsdom",
       setupFiles: ["./src/test/setup.ts"],
@@ -21,5 +23,5 @@ export default defineConfig({
       include: ["src/**/*.{test,spec}.{ts,tsx}"],
       exclude: ["tests/e2e/**", "node_modules/**"],
     },
-  },
+  } as unknown as Record<string, unknown>,
 });

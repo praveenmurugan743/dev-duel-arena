@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { ensureAnonSession } from "@/lib/auth";
-import { pickRandomQuestionIds } from "@/lib/questions";
+import { createRoom as createRoomFn, joinRoom as joinRoomFn } from "@/lib/game.functions";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";

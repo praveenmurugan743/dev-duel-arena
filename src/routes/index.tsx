@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { ensureAnonSession } from "@/lib/auth";
-import { pickRandomQuestionIds } from "@/lib/questions";
+import { createRoom as createRoomFn, joinRoom as joinRoomFn } from "@/lib/game.functions";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -38,45 +38,15 @@ function Home() {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const createRoomRpc = useServerFn(createRoomFn);
+  const joinRoomRpc = useServerFn(joinRoomFn);
 
   async function doCreate(displayName: string) {
     setBusy(true);
     try {
-      const userId = user?.id ?? (await ensureAnonSession());
-      const questionIds = await pickRandomQuestionIds(10);
-
-      // Try a few times in case of code collision
-      let roomCode = "";
-      let roomId = "";
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const candidate = generateCode();
-        const { data, error } = await supabase
-          .from("rooms")
-          .insert({
-            code: candidate,
-            status: "lobby",
-            question_ids: questionIds,
-            host_id: userId,
-          })
-          .select("id, code")
-          .single();
-        if (!error && data) {
-          roomCode = data.code;
-          roomId = data.id;
-          break;
-        }
-      }
-      if (!roomId) throw new Error("Could not create room");
-
-      const { data: player, error: pErr } = await supabase
-        .from("players")
-        .insert({ room_id: roomId, user_id: userId, name: displayName })
-        .select("id")
-        .single();
-      if (pErr || !player) throw pErr;
-
-      sessionStorage.setItem(`dd:player:${roomId}`, player.id);
-      navigate({ to: "/room/$code", params: { code: roomCode } });
+      const res = await createRoomRpc({ data: { displayName } });
+      sessionStorage.setItem(`dd:player:${res.roomId}`, res.playerId);
+      navigate({ to: "/room/$code", params: { code: res.code } });
     } catch (e) {
       console.error(e);
       toast.error("Failed to create room");
@@ -116,35 +86,18 @@ function Home() {
     if (!/^\d{4}$/.test(code)) return toast.error("Enter the 4-digit room code");
     setBusy(true);
     try {
-      const userId = await ensureAnonSession();
-      const { data: room, error } = await supabase
-        .from("rooms")
-        .select("id, status")
-        .eq("code", code)
-        .maybeSingle();
-      if (error || !room) {
-        toast.error("Room not found");
-        return;
-      }
-      if (room.status !== "lobby") {
-        toast.error("Game already started");
-        return;
-      }
-      const { data: player, error: pErr } = await supabase
-        .from("players")
-        .insert({ room_id: room.id, user_id: userId, name: name.trim() })
-        .select("id")
-        .single();
-      if (pErr || !player) throw pErr;
-      sessionStorage.setItem(`dd:player:${room.id}`, player.id);
+      await ensureAnonSession();
+      const res = await joinRoomRpc({ data: { code, displayName: name.trim() } });
+      sessionStorage.setItem(`dd:player:${res.roomId}`, res.playerId);
       navigate({ to: "/room/$code", params: { code } });
     } catch (e) {
       console.error(e);
-      toast.error("Failed to join room");
+      toast.error(e instanceof Error ? e.message : "Failed to join room");
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <main className="min-h-screen bg-grid flex flex-col items-center justify-center px-4 py-12">

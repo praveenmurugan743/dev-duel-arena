@@ -1,8 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "@/lib/auth";
-import { getQuestionsByIds, type Question } from "@/lib/questions";
+import type { PublicQuestion } from "@/lib/questions";
+import {
+  getRoomQuestions,
+  startGame as startGameFn,
+  advanceQuestion as advanceQuestionFn,
+  submitAnswer as submitAnswerFn,
+} from "@/lib/game.functions";
 import { CodeQuestion } from "@/components/CodeQuestion";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -42,7 +49,12 @@ function RoomPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<PublicQuestion[]>([]);
+  const [answerResult, setAnswerResult] = useState<{ index: number; isCorrect: boolean } | null>(null);
+  const fetchQuestions = useServerFn(getRoomQuestions);
+  const startGameRpc = useServerFn(startGameFn);
+  const advanceRpc = useServerFn(advanceQuestionFn);
+  const submitAnswerRpc = useServerFn(submitAnswerFn);
   const [selected, setSelected] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
   const [advancing, setAdvancing] = useState(false);
@@ -76,7 +88,7 @@ function RoomPage() {
         const r = roomData as unknown as Room;
         setRoom(r);
 
-        const qs = await getQuestionsByIds(r.question_ids as number[]);
+        const qs = await fetchQuestions({ data: { roomId: r.id } });
         setQuestions(qs);
 
         const { data: ps } = await supabase
@@ -125,6 +137,7 @@ function RoomPage() {
   // Reset selection when question changes
   useEffect(() => {
     setSelected(null);
+    setAnswerResult(null);
   }, [room?.current_question_index]);
 
   // Countdown timer driven by question_started_at
@@ -165,59 +178,46 @@ function RoomPage() {
 
   async function startGame() {
     if (!room) return;
-    await supabase
-      .from("rooms")
-      .update({
-        status: "playing",
-        current_question_index: 0,
-        question_started_at: new Date().toISOString(),
-      })
-      .eq("id", room.id);
+    try {
+      await startGameRpc({ data: { roomId: room.id } });
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not start game");
+    }
   }
 
   async function advance() {
     if (!room) return;
     setAdvancing(true);
-    const next = room.current_question_index + 1;
-    if (next >= (room.question_ids as number[]).length) {
-      await supabase.from("rooms").update({ status: "finished" }).eq("id", room.id);
-    } else {
-      await supabase
-        .from("rooms")
-        .update({
-          current_question_index: next,
-          question_started_at: new Date().toISOString(),
-        })
-        .eq("id", room.id);
+    try {
+      await advanceRpc({ data: { roomId: room.id } });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAdvancing(false);
     }
-    setAdvancing(false);
   }
 
   async function submitAnswer(option: string) {
     if (!room || !playerId || selected) return;
-    const q = questions[room.current_question_index];
-    if (!q) return;
     setSelected(option);
-    const correct = option === q.correct_option;
-    const timeBonus = Math.max(0, Math.round(timeLeft * 10)); // up to 150
-    const earned = correct ? 100 + timeBonus : 0;
-
-    const { error } = await supabase.from("answers").insert({
-      player_id: playerId,
-      room_id: room.id,
-      question_index: room.current_question_index,
-      is_correct: correct,
-    });
-    if (error) {
-      // duplicate (already answered) — ignore
-      return;
-    }
-    if (earned > 0) {
-      const me = players.find((p) => p.id === playerId);
-      const newScore = (me?.score ?? 0) + earned;
-      await supabase.from("players").update({ score: newScore }).eq("id", playerId);
+    try {
+      const res = await submitAnswerRpc({
+        data: {
+          roomId: room.id,
+          questionIndex: room.current_question_index,
+          option,
+        },
+      });
+      if (typeof res.isCorrect === "boolean") {
+        setAnswerResult({ index: room.current_question_index, isCorrect: res.isCorrect });
+      }
+    } catch (e) {
+      console.error(e);
+      setSelected(null);
     }
   }
+
 
   // Confetti on finish
   useEffect(() => {
@@ -286,6 +286,11 @@ function RoomPage() {
                 question={currentQuestion}
                 timeLeft={timeLeft}
                 selected={selected}
+                answerResult={
+                  answerResult && answerResult.index === room.current_question_index
+                    ? answerResult
+                    : null
+                }
                 onAnswer={submitAnswer}
               />
             )}
@@ -379,15 +384,17 @@ function QuestionView({
   question,
   timeLeft,
   selected,
+  answerResult,
   onAnswer,
 }: {
-  question: Question;
+  question: PublicQuestion;
   timeLeft: number;
   selected: string | null;
+  answerResult: { index: number; isCorrect: boolean } | null;
   onAnswer: (option: string) => void;
 }) {
   const pct = useMemo(() => Math.max(0, Math.min(100, (timeLeft / 15) * 100)), [timeLeft]);
-  const showResult = selected !== null || timeLeft <= 0;
+  const showResult = answerResult !== null;
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 sm:p-8 shadow-neon">
@@ -418,14 +425,15 @@ function QuestionView({
       />
 
       <div className="grid sm:grid-cols-2 gap-3">
-        {question.options.map((opt, i) => {
+        {question.options.map((opt: string, i: number) => {
           const isSelected = selected === opt;
-          const isCorrect = opt === question.correct_option;
           let cls = "border-border bg-secondary hover:border-neon hover:text-neon";
-          if (showResult) {
-            if (isCorrect) cls = "border-neon bg-neon/15 text-neon";
-            else if (isSelected) cls = "border-destructive bg-destructive/15 text-destructive";
-            else cls = "border-border bg-secondary opacity-60";
+          if (showResult && isSelected) {
+            cls = answerResult!.isCorrect
+              ? "border-neon bg-neon/15 text-neon"
+              : "border-destructive bg-destructive/15 text-destructive";
+          } else if (selected !== null) {
+            cls = "border-border bg-secondary opacity-60";
           }
           return (
             <button

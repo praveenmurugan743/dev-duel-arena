@@ -177,59 +177,46 @@ function RoomPage() {
 
   async function startGame() {
     if (!room) return;
-    await supabase
-      .from("rooms")
-      .update({
-        status: "playing",
-        current_question_index: 0,
-        question_started_at: new Date().toISOString(),
-      })
-      .eq("id", room.id);
+    try {
+      await startGameRpc({ data: { roomId: room.id } });
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not start game");
+    }
   }
 
   async function advance() {
     if (!room) return;
     setAdvancing(true);
-    const next = room.current_question_index + 1;
-    if (next >= (room.question_ids as number[]).length) {
-      await supabase.from("rooms").update({ status: "finished" }).eq("id", room.id);
-    } else {
-      await supabase
-        .from("rooms")
-        .update({
-          current_question_index: next,
-          question_started_at: new Date().toISOString(),
-        })
-        .eq("id", room.id);
+    try {
+      await advanceRpc({ data: { roomId: room.id } });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAdvancing(false);
     }
-    setAdvancing(false);
   }
 
   async function submitAnswer(option: string) {
     if (!room || !playerId || selected) return;
-    const q = questions[room.current_question_index];
-    if (!q) return;
     setSelected(option);
-    const correct = option === q.correct_option;
-    const timeBonus = Math.max(0, Math.round(timeLeft * 10)); // up to 150
-    const earned = correct ? 100 + timeBonus : 0;
-
-    const { error } = await supabase.from("answers").insert({
-      player_id: playerId,
-      room_id: room.id,
-      question_index: room.current_question_index,
-      is_correct: correct,
-    });
-    if (error) {
-      // duplicate (already answered) — ignore
-      return;
-    }
-    if (earned > 0) {
-      const me = players.find((p) => p.id === playerId);
-      const newScore = (me?.score ?? 0) + earned;
-      await supabase.from("players").update({ score: newScore }).eq("id", playerId);
+    try {
+      const res = await submitAnswerRpc({
+        data: {
+          roomId: room.id,
+          questionIndex: room.current_question_index,
+          option,
+        },
+      });
+      if (typeof res.isCorrect === "boolean") {
+        setAnswerResult({ index: room.current_question_index, isCorrect: res.isCorrect });
+      }
+    } catch (e) {
+      console.error(e);
+      setSelected(null);
     }
   }
+
 
   // Confetti on finish
   useEffect(() => {

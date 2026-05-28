@@ -18,9 +18,7 @@ function generateCode() {
 
 // Returns questions for a room WITHOUT correct_option.
 export const getRoomQuestions = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z.object({ roomId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ roomId: z.string().uuid() }).parse(input))
   .handler(async ({ data }): Promise<PublicQuestion[]> => {
     const { data: room, error } = await supabaseAdmin
       .from("rooms")
@@ -36,9 +34,7 @@ export const getRoomQuestions = createServerFn({ method: "POST" })
 export const createRoom = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z
-      .object({ displayName: z.string().trim().min(1).max(20) })
-      .parse(input),
+    z.object({ displayName: z.string().trim().min(1).max(20) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { userId, claims } = context;
@@ -124,9 +120,7 @@ async function assertHost(roomId: string, userId: string) {
 
 export const startGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ roomId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ roomId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertHost(data.roomId, context.userId);
     const { error } = await supabaseAdmin
@@ -143,18 +137,13 @@ export const startGame = createServerFn({ method: "POST" })
 
 export const advanceQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ roomId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ roomId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const room = await assertHost(data.roomId, context.userId);
     const ids = (room.question_ids as number[]) ?? [];
     const next = (room.current_question_index ?? -1) + 1;
     if (next >= ids.length) {
-      await supabaseAdmin
-        .from("rooms")
-        .update({ status: "finished" })
-        .eq("id", data.roomId);
+      await supabaseAdmin.from("rooms").update({ status: "finished" }).eq("id", data.roomId);
     } else {
       await supabaseAdmin
         .from("rooms")
@@ -198,8 +187,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .eq("id", data.roomId)
       .maybeSingle();
     if (!room) throw new Error("Room not found");
-    if (room.status !== "playing")
-      throw new Error("Game is not in progress");
+    if (room.status !== "playing") throw new Error("Game is not in progress");
     if (room.current_question_index !== data.questionIndex)
       throw new Error("Question already ended");
 
@@ -217,9 +205,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { ok: true, duplicate: true };
 
-    const startedAt = room.question_started_at
-      ? new Date(room.question_started_at).getTime()
-      : 0;
+    const startedAt = room.question_started_at ? new Date(room.question_started_at).getTime() : 0;
     const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : QUESTION_SECONDS;
     const timeLeft = Math.max(0, QUESTION_SECONDS - elapsed);
     const isCorrect = data.option === question.correct_option;

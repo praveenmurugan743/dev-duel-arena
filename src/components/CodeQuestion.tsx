@@ -25,12 +25,5 @@ export function CodeQuestion({ html, className }: { html: string; className?: st
     });
   }, [html]);
 
-  return (
-    <div
-      ref={ref}
-      className={className}
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
+  return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }

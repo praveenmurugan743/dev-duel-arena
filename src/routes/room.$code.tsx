@@ -50,7 +50,9 @@ function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [questions, setQuestions] = useState<PublicQuestion[]>([]);
-  const [answerResult, setAnswerResult] = useState<{ index: number; isCorrect: boolean } | null>(null);
+  const [answerResult, setAnswerResult] = useState<{ index: number; isCorrect: boolean } | null>(
+    null,
+  );
   const fetchQuestions = useServerFn(getRoomQuestions);
   const startGameRpc = useServerFn(startGameFn);
   const advanceRpc = useServerFn(advanceQuestionFn);
@@ -61,9 +63,7 @@ function RoomPage() {
   const advanceTimerRef = useRef<number | null>(null);
 
   const playerId =
-    typeof window !== "undefined" && room
-      ? sessionStorage.getItem(`dd:player:${room.id}`)
-      : null;
+    typeof window !== "undefined" && room ? sessionStorage.getItem(`dd:player:${room.id}`) : null;
   const isHost = !!userId && !!room && room.host_id === userId;
 
   // Bootstrap: anon session, fetch room + players, load questions
@@ -218,7 +218,6 @@ function RoomPage() {
     }
   }
 
-
   // Confetti on finish
   useEffect(() => {
     if (room?.status !== "finished") return;
@@ -244,8 +243,7 @@ function RoomPage() {
   }
 
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-  const currentQuestion =
-    room.status === "playing" ? questions[room.current_question_index] : null;
+  const currentQuestion = room.status === "playing" ? questions[room.current_question_index] : null;
   const totalQuestions = (room.question_ids as number[]).length;
 
   return (
@@ -253,17 +251,13 @@ function RoomPage() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <header className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-xs font-mono text-muted-foreground tracking-widest">
-              ROOM CODE
-            </div>
+            <div className="text-xs font-mono text-muted-foreground tracking-widest">ROOM CODE</div>
             <div className="text-3xl font-black font-mono text-neon tracking-[0.3em]">
               {room.code}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xs font-mono text-muted-foreground tracking-widest">
-              DEV DUEL
-            </div>
+            <div className="text-xs font-mono text-muted-foreground tracking-widest">DEV DUEL</div>
             <div className="text-sm font-mono">
               {room.status === "playing" && (
                 <>
@@ -321,9 +315,7 @@ function RoomPage() {
                 </li>
               ))}
               {sortedPlayers.length === 0 && (
-                <li className="text-xs font-mono text-muted-foreground">
-                  Waiting for players...
-                </li>
+                <li className="text-xs font-mono text-muted-foreground">Waiting for players...</li>
               )}
             </ul>
           </aside>
@@ -464,9 +456,7 @@ function ResultsView({ players, onHome }: { players: Player[]; onHome: () => voi
       <h1 className="text-5xl sm:text-6xl font-black mb-2">
         <span className="text-neon">{winner?.name ?? "—"}</span> wins
       </h1>
-      <p className="font-mono text-muted-foreground mb-10">
-        with {winner?.score ?? 0} points
-      </p>
+      <p className="font-mono text-muted-foreground mb-10">with {winner?.score ?? 0} points</p>
 
       <ol className="max-w-md mx-auto space-y-2 mb-10 text-left">
         {players.map((p, i) => (

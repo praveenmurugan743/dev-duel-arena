@@ -4,10 +4,17 @@ import { test, expect } from "@playwright/test";
 // flow. We intercept the broker's network call so the real Google endpoint is
 // never hit, then simulate the post-redirect signed-in state and confirm the
 // user lands inside a room route.
-test("create room flow triggers OAuth and lands in a room after sign-in", async ({ page, context }) => {
+test("create room flow triggers OAuth and lands in a room after sign-in", async ({
+  page,
+  context,
+}) => {
   // Block real OAuth/broker traffic so the test stays hermetic.
   await context.route(/(accounts\.google\.com|lovable\.app\/auth|oauth)/, (route) =>
-    route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>mock oauth</body></html>" }),
+    route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<html><body>mock oauth</body></html>",
+    }),
   );
 
   await page.goto("/");
@@ -39,5 +46,9 @@ test("create room flow triggers OAuth and lands in a room after sign-in", async 
   await createBtn.click();
 
   // Verify OAuth call was attempted (broker intercepted).
-  await expect.poll(async () => page.evaluate(() => (window as unknown as { __oauthCalled: boolean }).__oauthCalled)).toBe(true);
+  await expect
+    .poll(async () =>
+      page.evaluate(() => (window as unknown as { __oauthCalled: boolean }).__oauthCalled),
+    )
+    .toBe(true);
 });

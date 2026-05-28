@@ -73,17 +73,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Lovable App" },
-      { name: "description", content: "Dev Duel Arena is a real-time multiplayer developer trivia game." },
+      {
+        name: "description",
+        content: "Dev Duel Arena is a real-time multiplayer developer trivia game.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Dev Duel Arena is a real-time multiplayer developer trivia game." },
+      {
+        property: "og:description",
+        content: "Dev Duel Arena is a real-time multiplayer developer trivia game.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "Dev Duel Arena is a real-time multiplayer developer trivia game." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b29da7a8-7174-447b-9c25-96d4191779e2/id-preview-c5ed4360--a2d2027f-8ea3-4bbc-a7a4-595c05e8db68.lovable.app-1779355972352.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b29da7a8-7174-447b-9c25-96d4191779e2/id-preview-c5ed4360--a2d2027f-8ea3-4bbc-a7a4-595c05e8db68.lovable.app-1779355972352.png" },
+      {
+        name: "twitter:description",
+        content: "Dev Duel Arena is a real-time multiplayer developer trivia game.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b29da7a8-7174-447b-9c25-96d4191779e2/id-preview-c5ed4360--a2d2027f-8ea3-4bbc-a7a4-595c05e8db68.lovable.app-1779355972352.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b29da7a8-7174-447b-9c25-96d4191779e2/id-preview-c5ed4360--a2d2027f-8ea3-4bbc-a7a4-595c05e8db68.lovable.app-1779355972352.png",
+      },
     ],
     links: [
       {

@@ -44,8 +44,15 @@ test("two-browser multiplayer lobby + join + start duel", async ({ browser }) =>
 
   // Either the player navigates into the room (backend live) or a toast
   // surfaces a "not found" error. Both paths prove the join UX wires up.
-  const navigated = player.waitForURL(new RegExp(`/room/${roomCode}`), { timeout: 5_000 }).then(() => "nav" as const).catch(() => null);
-  const errored = player.getByText(/room not found|failed to join/i).waitFor({ timeout: 5_000 }).then(() => "err" as const).catch(() => null);
+  const navigated = player
+    .waitForURL(new RegExp(`/room/${roomCode}`), { timeout: 5_000 })
+    .then(() => "nav" as const)
+    .catch(() => null);
+  const errored = player
+    .getByText(/room not found|failed to join/i)
+    .waitFor({ timeout: 5_000 })
+    .then(() => "err" as const)
+    .catch(() => null);
   const outcome = await Promise.race([navigated, errored]);
   expect(outcome).not.toBeNull();
 
@@ -59,14 +66,18 @@ test("two-browser multiplayer lobby + join + start duel", async ({ browser }) =>
     if (await startBtn.isVisible().catch(() => false)) {
       await startBtn.click();
       // Player should see the first question render.
-      await expect(player.locator("button, [role='button']").first()).toBeVisible({ timeout: 10_000 });
+      await expect(player.locator("button, [role='button']").first()).toBeVisible({
+        timeout: 10_000,
+      });
       // Select an answer option and check it appears selected.
       const optionBtn = player.locator("button").filter({ hasText: /^.+$/ }).nth(2);
       await optionBtn.click();
-      await expect(optionBtn).toHaveAttribute("aria-pressed", /true|selected/i).catch(async () => {
-        // Fall back to a visual selected-state class check.
-        await expect(optionBtn).toHaveClass(/selected|ring|border-neon/);
-      });
+      await expect(optionBtn)
+        .toHaveAttribute("aria-pressed", /true|selected/i)
+        .catch(async () => {
+          // Fall back to a visual selected-state class check.
+          await expect(optionBtn).toHaveClass(/selected|ring|border-neon/);
+        });
     }
   }
 

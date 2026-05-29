@@ -1,5 +1,7 @@
+import "@tanstack/react-start/server-only";
 // Server-only access to the full question bank (including correct answers).
-// Never import this from client code.
+// Never import this from client code. The marker above causes a hard build
+// error if this file is ever pulled into a client bundle.
 import questionsData from "@/data/questions.json";
 
 export type ServerQuestion = {

@@ -104,6 +104,8 @@ function RoomPage() {
     return () => {
       cancelled = true;
     };
+    // fetchQuestions is a stable server-fn binding; room is set inside this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, navigate]);
 
   // Realtime subscriptions
@@ -132,6 +134,8 @@ function RoomPage() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // Only re-subscribe when the room id changes, not on every room field update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.id]);
 
   // Reset selection when question changes
